@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Contributions Tracker</title>
+<style>
+:root{
+  --bg:#0b1020;--panel:#141b2d;--panel2:#1b2439;--text:#f4f7fb;
+  --muted:#9eabc2;--green:#37d67a;--gold:#ffc857;--blue:#62a8ff;
+  --border:rgba(255,255,255,.08);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:radial-gradient(circle at top right,rgba(98,168,255,.12),transparent 30%),
+             linear-gradient(180deg,#080d19 0%,var(--bg) 100%);
+  color:var(--text);min-height:100vh
+}
+.wrap{max-width:1180px;margin:auto;padding:28px 18px 50px}
+.hero{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:22px}
+.eyebrow{color:var(--gold);font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+h1{font-size:clamp(2rem,6vw,4.3rem);line-height:.95;margin:8px 0 10px;letter-spacing:-.05em}
+.sub{color:var(--muted);max-width:650px}
+.updated{font-size:.85rem;color:var(--muted);white-space:nowrap}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:24px 0}
+.card,.panel{
+  background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
+  border:1px solid var(--border);border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,.18)
+}
+.card{padding:18px}
+.label{color:var(--muted);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.value{font-size:clamp(1.7rem,4vw,2.8rem);font-weight:900;margin-top:7px}
+.value.green{color:var(--green)} .value.gold{color:var(--gold)}
+.grid{display:grid;grid-template-columns:1.3fr .7fr;gap:16px}
+.panel{padding:20px}
+.panel h2{margin:0 0 16px;font-size:1.15rem}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px 8px;border-bottom:1px solid var(--border);text-align:left}
+th{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+td:last-child,th:last-child{text-align:right}
+tr:last-child td{border-bottom:0}
+.weekstrip{display:flex;gap:8px;overflow:auto;padding-bottom:4px;margin-bottom:16px}
+.weekbtn{
+  border:1px solid var(--border);background:var(--panel2);color:var(--muted);
+  padding:8px 12px;border-radius:999px;cursor:pointer;font-weight:750;white-space:nowrap
+}
+.weekbtn.active{background:var(--text);color:#111827}
+.member{
+  display:flex;justify-content:space-between;gap:12px;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--border)
+}
+.member:last-child{border-bottom:0}
+.amount{font-weight:900;color:var(--green)}
+.bar{height:10px;background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden;margin-top:7px}
+.fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:999px}
+.note{color:var(--muted);font-size:.82rem;margin-top:4px}
+.status{display:inline-flex;align-items:center;gap:7px;font-size:.8rem;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+.foot{color:var(--muted);font-size:.8rem;text-align:center;margin-top:28px}
+@media(max-width:800px){
+  .cards{grid-template-columns:repeat(2,1fr)}
+  .grid{grid-template-columns:1fr}
+  .hero{display:block}.updated{margin-top:12px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">2026/27 Group Fund</div>
+      <h1>Weekly Contributions</h1>
+      <div class="sub">A simple live dashboard showing weekly contributions, member totals and the running group fund.</div>
+    </div>
+    <div class="updated">
+      <span class="status"><span class="dot"></span> Live-sheet ready</span><br>
+      Updated: <span id="updatedText">15 Aug 2026</span>
+    </div>
+  </div>
+
+  <div class="weekstrip" id="weekStrip"></div>
+
+  <div class="cards">
+    <div class="card"><div class="label">This Week</div><div class="value" id="weekTotal">£25.00</div></div>
+    <div class="card"><div class="label">Season Total</div><div class="value green" id="seasonTotal">£25.00</div></div>
+    <div class="card"><div class="label">Contributors</div><div class="value gold" id="contributors">5</div></div>
+    <div class="card"><div class="label">Average / Person</div><div class="value" id="average">£5.00</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Weekly Contributions</h2>
+      <table>
+        <thead><tr><th>Member</th><th>Note</th><th>Contribution</th></tr></thead>
+        <tbody id="weekTable"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Member Totals</h2>
+      <div id="memberTotals"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <h2>Season Progress</h2>
+    <table>
+      <thead><tr><th>Week</th><th>Date</th><th>Contributors</th><th>Total</th></tr></thead>
+      <tbody id="seasonTable"></tbody>
+    </table>
+  </div>
+
+  <div class="foot">Built for GitHub Pages · Updates automatically from a published Google Sheet CSV.</div>
+</div>
+
+<script>
+/*
+RECOMMENDED GOOGLE SHEET TAB
+----------------------------
+Create a tab called Contributions with columns:
+
+Date,Week,Member,Contribution,Note
+
+Example:
+15/08/2026,Week 1,Jonners,5,Weekly contribution
+15/08/2026,Week 1,Dave,5,Weekly contribution
+15/08/2026,Week 1,Bungle,5,Weekly contribution
+15/08/2026,Week 1,Handy,5,Weekly contribution
+15/08/2026,Week 1,Jasper,5,Weekly contribution
+
+Then publish THAT TAB as CSV and paste its published CSV URL below.
+*/
+const SHEET_CSV_URL = "";
+
+const fallbackRows = [
+  {date:"15 Aug 2026",week:"Week 1",member:"Jonners",contribution:5,note:"Weekly contribution"},
+  {date:"15 Aug 2026",week:"Week 1",member:"Dave",contribution:5,note:"Weekly contribution"},
+  {date:"15 Aug 2026",week:"Week 1",member:"Bungle",contribution:5,note:"Weekly contribution"},
+  {date:"15 Aug 2026",week:"Week 1",member:"Handy",contribution:5,note:"Weekly contribution"},
+  {date:"15 Aug 2026",week:"Week 1",member:"Jasper",contribution:5,note:"Weekly contribution"}
+];
+
+let rows = fallbackRows;
+let selectedWeek = "Week 1";
+
+const money = n => "£" + Number(n || 0).toFixed(2);
+
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/);
+  const parsed=lines.map(line=>{
+    const out=[]; let cur=""; let quoted=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c === '"'){
+        if(quoted && line[i+1] === '"'){cur+='"';i++;}
+        else quoted=!quoted;
+      }else if(c === ',' && !quoted){out.push(cur);cur="";}
+      else cur+=c;
+    }
+    out.push(cur);
+    return out;
+  });
+  const headers=parsed.shift().map(x=>x.trim().toLowerCase());
+  return parsed.filter(r=>r.some(x=>x.trim())).map(r=>{
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=(r[i]||"").trim());
+    return {
+      date:obj.date||"",
+      week:obj.week||"Week 1",
+      member:obj.member||"",
+      contribution:Number((obj.contribution||"0").replace(/[£,]/g,""))||0,
+      note:obj.note||""
+    };
+  }).filter(x=>x.member);
+}
+
+function weekNumber(label){
+  const m=String(label).match(/\d+/);
+  return m ? Number(m[0]) : 0;
+}
+
+function render(){
+  const weeks=[...new Set(rows.map(r=>r.week))].sort((a,b)=>weekNumber(a)-weekNumber(b));
+  if(!weeks.includes(selectedWeek)) selectedWeek=weeks[weeks.length-1] || "Week 1";
+
+  document.getElementById("weekStrip").innerHTML=weeks.map(w=>
+    `<button class="weekbtn ${w===selectedWeek?'active':''}" onclick="selectedWeek='${w.replace(/'/g,"\\'")}';render()">${w}</button>`
+  ).join("");
+
+  const current=rows.filter(r=>r.week===selectedWeek);
+  const weekTotal=current.reduce((s,r)=>s+r.contribution,0);
+  const seasonTotal=rows.reduce((s,r)=>s+r.contribution,0);
+  const people=[...new Set(current.map(r=>r.member))];
+  const latestDate=current[0]?.date || rows[rows.length-1]?.date || "";
+
+  document.getElementById("updatedText").textContent=latestDate;
+  document.getElementById("weekTotal").textContent=money(weekTotal);
+  document.getElementById("seasonTotal").textContent=money(seasonTotal);
+  document.getElementById("contributors").textContent=people.length;
+  document.getElementById("average").textContent=money(people.length ? weekTotal/people.length : 0);
+
+  document.getElementById("weekTable").innerHTML=current.map(r=>
+    `<tr><td style="font-weight:800">${r.member}</td><td>${r.note||"—"}</td><td class="amount">${money(r.contribution)}</td></tr>`
+  ).join("");
+
+  const totals={};
+  rows.forEach(r=>totals[r.member]=(totals[r.member]||0)+r.contribution);
+  const max=Math.max(...Object.values(totals),1);
+  document.getElementById("memberTotals").innerHTML=Object.entries(totals)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([name,total])=>`
+      <div class="member">
+        <div style="width:100%">
+          <div style="display:flex;justify-content:space-between;gap:12px">
+            <strong>${name}</strong><span class="amount">${money(total)}</span>
+          </div>
+          <div class="bar"><div class="fill" style="width:${(total/max)*100}%"></div></div>
+        </div>
+      </div>`).join("");
+
+  document.getElementById("seasonTable").innerHTML=weeks.map(w=>{
+    const wr=rows.filter(r=>r.week===w);
+    const total=wr.reduce((s,r)=>s+r.contribution,0);
+    const count=new Set(wr.map(r=>r.member)).size;
+    return `<tr><td>${w}</td><td>${wr[0]?.date||""}</td><td>${count}</td><td class="amount">${money(total)}</td></tr>`;
+  }).join("");
+}
+
+async function loadLive(){
+  if(!SHEET_CSV_URL){ render(); return; }
+  try{
+    const res=await fetch(SHEET_CSV_URL,{cache:"no-store"});
+    if(!res.ok) throw new Error("Could not load sheet");
+    const loaded=parseCSV(await res.text());
+    if(loaded.length){
+      rows=loaded;
+      const weeks=[...new Set(rows.map(r=>r.week))].sort((a,b)=>weekNumber(a)-weekNumber(b));
+      selectedWeek=weeks[weeks.length-1];
+    }
+  }catch(err){
+    console.warn("Live sheet unavailable; displaying fallback data.",err);
+  }
+  render();
+}
+
+loadLive();
+</script>
+</body>
+</html>
