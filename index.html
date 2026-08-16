@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Weekly Group Tracker</title>
+<style>
+:root{--bg:#0a0f1c;--panel:#141b2a;--panel2:#1b2436;--text:#f7f9fc;--muted:#9aa7bb;--green:#38d67a;--red:#ff6472;--gold:#ffc857;--border:rgba(255,255,255,.08)}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,#070b13,var(--bg));color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;min-height:100vh}
+.wrap{max-width:1200px;margin:auto;padding:28px 18px 52px}
+.hero{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:20px}
+.eyebrow{color:var(--gold);font-size:.76rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+h1{font-size:clamp(2rem,6vw,4rem);line-height:.96;letter-spacing:-.05em;margin:8px 0}
+.sub,.status,.foot{color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:22px 0}
+.card,.panel{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015));border:1px solid var(--border);border-radius:18px}
+.card,.panel{padding:20px}
+.label{font-size:.74rem;color:var(--muted);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.value{font-size:clamp(1.8rem,4vw,2.75rem);font-weight:950;margin-top:6px}
+.green{color:var(--green)}.red{color:var(--red)}.gold{color:var(--gold)}
+.weekstrip{display:flex;gap:8px;overflow:auto;padding:4px 0 2px}
+.weekbtn{border:1px solid var(--border);background:var(--panel2);color:var(--muted);padding:9px 14px;border-radius:999px;cursor:pointer;font-weight:800;white-space:nowrap}
+.weekbtn.active{background:var(--text);color:#101522}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel h2{font-size:1.12rem;margin:0 0 14px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:11px 8px;border-bottom:1px solid var(--border);text-align:left}
+th{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+td:last-child,th:last-child{text-align:right}
+tr:last-child td{border-bottom:0}
+.totalrow td{font-weight:900;padding-top:14px}
+.result{display:inline-block;padding:5px 9px;border-radius:999px;font-size:.76rem;font-weight:900}
+.win{background:rgba(56,214,122,.12);color:var(--green)}
+.loss{background:rgba(255,100,114,.12);color:var(--red)}
+.neutral{background:rgba(255,255,255,.08);color:var(--muted)}
+.error{margin:18px 0;padding:14px;border-radius:12px;background:rgba(255,200,87,.08);border:1px solid rgba(255,200,87,.25);color:#ffe0a0}
+.foot{text-align:center;font-size:.8rem;margin-top:28px}
+@media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.hero{display:block}.status{margin-top:10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">2026/27 Live Tracker</div>
+      <h1>Weekly Group Tracker</h1>
+      <div class="sub">Overall season totals first. Use the week buttons below to open detailed weekly figures.</div>
+    </div>
+    <div class="status" id="status">Loading live sheet…</div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="label">Overall Total Input</div><div class="value" id="overallInput">0</div></div>
+    <div class="card"><div class="label">Overall Total Return</div><div class="value green" id="overallReturn">0</div></div>
+    <div class="card"><div class="label">Overall Difference</div><div class="value" id="overallDifference">0</div></div>
+    <div class="card"><div class="label">Weeks Recorded</div><div class="value gold" id="weeksCount">0</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>Overall Input Totals</h2>
+    <table>
+      <thead><tr><th>Input</th><th>Total</th></tr></thead>
+      <tbody id="overallInputBreakdown"></tbody>
+    </table>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <h2>Overall Individual Percentages</h2>
+    <table>
+      <thead><tr><th>Member</th><th>Correct</th><th>Attempts</th><th>Percentage</th></tr></thead>
+      <tbody id="overallIndividuals"></tbody>
+    </table>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <h2>View Weekly Detail</h2>
+    <div class="weekstrip" id="weekButtons"></div>
+  </div>
+
+  <div id="message"></div>
+
+  <div id="weekDetail" style="display:none;margin-top:16px">
+    <div class="cards">
+      <div class="card"><div class="label">Week Input</div><div class="value" id="inputTotal">0</div></div>
+      <div class="card"><div class="label">Week Return</div><div class="value green" id="returnTotal">0</div></div>
+      <div class="card"><div class="label">Week Difference</div><div class="value" id="difference">0</div></div>
+      <div class="card"><div class="label">Correct Guesses</div><div class="value gold" id="weekGuessPct">0%</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Inputs</h2>
+        <table><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody id="inputs"></tbody></table>
+      </div>
+      <div class="panel">
+        <h2>Returns</h2>
+        <table><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody id="returns"></tbody></table>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h2>Individual Performance</h2>
+      <table><thead><tr><th>Member</th><th>Result</th></tr></thead><tbody id="individuals"></tbody></table>
+    </div>
+  </div>
+
+  <div class="foot">Live Google Sheet · Plain numbers only · New weeks are detected automatically.</div>
+</div>
+
+<script>
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vT50GG_8DB16Ac3mWhrcAhq-CLgqligAcfpLOQpJW10WIjv2VvVPGK_KK-ynCpcHVmcFdDwZ_3l6_0v/pub?output=csv";
+let grid=[],weeks=[],selectedIndex=0;
+
+function txt(v){return String(v??"").trim();}
+function lower(v){return txt(v).toLowerCase();}
+function num(v){const s=txt(v).replace(/[£,$,]/g,"");if(!s||!/^[-+]?\d*\.?\d+$/.test(s))return null;const n=Number(s);return Number.isFinite(n)?n:null;}
+function fmt(n){n=Number(n);if(!Number.isFinite(n))return"0";return Number.isInteger(n)?String(n):n.toFixed(2).replace(/\.00$/,"");}
+function esc(s){return txt(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function parseCSV(text){
+  const rows=[];let row=[],cur="",q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(c==='"'){if(q&&text[i+1]==='"'){cur+='"';i++;}else q=!q;}
+    else if(c===','&&!q){row.push(cur);cur="";}
+    else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cur);cur="";if(row.some(x=>txt(x)!==""))rows.push(row);row=[];}
+    else cur+=c;
+  }
+  if(cur||row.length){row.push(cur);if(row.some(x=>txt(x)!==""))rows.push(row);}
+  return rows;
+}
+function detectWeeks(){
+  const found=[];
+  for(let r=0;r<grid.length;r++)for(let c=0;c<(grid[r]||[]).length;c++){const m=txt(grid[r][c]).match(/^week\s*(\d+)$/i);if(m)found.push({number:+m[1],label:"Week "+(+m[1]),row:r,col:c});}
+  found.sort((a,b)=>a.number-b.number||a.col-b.col);
+  const out=[],seen=new Set();for(const w of found){if(!seen.has(w.number)){seen.add(w.number);out.push(w);}}return out;
+}
+function sectionBounds(type){
+  const pats=type==="input"?[/^input$/,/^inputs$/,/^contribution$/,/^contributions$/]:[/^return$/,/^returns$/];
+  let start=-1;
+  for(let r=0;r<grid.length;r++){if(pats.some(p=>p.test(lower((grid[r]||[])[0])))){start=r;break;}}
+  if(start<0)return{start:-1,end:-1};
+  let end=grid.length;
+  for(let r=start+1;r<grid.length;r++){const l=lower((grid[r]||[])[0]);if(type==="input"&&/^return(s)?$/.test(l)){end=r;break;}if(type==="return"&&(/^individual performance$/.test(l)||/^individual$/.test(l)||/^member performance$/.test(l))){end=r;break;}}
+  return{start,end};
+}
+function valuesForSection(w,type){
+  const b=sectionBounds(type);if(b.start<0)return[];
+  const out=[];
+  for(let r=b.start+1;r<b.end;r++){const label=txt((grid[r]||[])[0]);if(!label)continue;if(/^total/i.test(label))continue;const value=num((grid[r]||[])[w.col]);if(value!==null)out.push({label,value});}
+  return out;
+}
+function totalForSection(w,type){
+  const b=sectionBounds(type);if(b.start<0)return 0;
+  for(let r=b.start+1;r<b.end;r++){const label=lower((grid[r]||[])[0]);if(/^total/.test(label)){const n=num((grid[r]||[])[w.col]);if(n!==null)return n;}}
+  return valuesForSection(w,type).reduce((s,x)=>s+x.value,0);
+}
+function individualRows(w){
+  let start=-1;
+  for(let r=0;r<grid.length;r++){const l=lower((grid[r]||[])[0]);if(/^individual performance$/.test(l)||/^individual$/.test(l)||/^member performance$/.test(l)){start=r;break;}}
+  if(start<0)return[];
+  const out=[];
+  for(let r=start+1;r<grid.length;r++){const name=txt((grid[r]||[])[0]);if(!name)continue;const raw=txt((grid[r]||[])[w.col]);if(!raw)continue;if(/^week\s*\d+$/i.test(name)||/^total/i.test(name))continue;out.push({name,result:raw});}
+  return out;
+}
+function resultPill(v){
+  const l=lower(v);let cls="neutral";
+  if(["win","w","1","yes","correct"].includes(l))cls="win";
+  else if(["loss","lose","l","0","no","incorrect"].includes(l))cls="loss";
+  return `<span class="result ${cls}">${esc(v)}</span>`;
+}
+function isCorrect(v){return ["win","w","1","yes","correct"].includes(lower(v));}
+function isIncorrect(v){return ["loss","lose","l","0","no","incorrect"].includes(lower(v));}
+function weeklyGuessPct(w){
+  const people=individualRows(w);let correct=0,attempts=0;
+  for(const p of people){if(isCorrect(p.result)){correct++;attempts++;}else if(isIncorrect(p.result)){attempts++;}else{const n=num(p.result);if(n!==null){attempts++;if(n>0)correct++;}}}
+  return attempts?(correct/attempts)*100:0;
+}
+
+const INPUT_LABELS=["Sky Boost","SL (Big)","SL (small)","Lot","Group"];
+function canonicalInputLabel(label){
+  const l=lower(label).replace(/\s+/g," ").trim();
+  if(l==="sky boost"||l==="boost")return"Sky Boost";
+  if(l==="sl (big)"||l==="sporting life (big)"||l==="sporing life (big)")return"SL (Big)";
+  if(l==="sl (small)"||l==="sporting life (small)"||l==="sporing life (small)")return"SL (small)";
+  if(l==="lot"||l==="lottery")return"Lot";
+  if(l==="group"||l==="group bet")return"Group";
+  return null;
+}
+function overallInputTotals(){
+  const totals=Object.fromEntries(INPUT_LABELS.map(x=>[x,0]));
+  for(const w of weeks)for(const item of valuesForSection(w,"input")){const key=canonicalInputLabel(item.label);if(key)totals[key]+=item.value;}
+  return totals;
+}
+
+function overallIndividualStats(){
+  const stats={};
+  for(const w of weeks){
+    for(const p of individualRows(w)){
+      const name=txt(p.name);
+      if(!name)continue;
+      if(!stats[name])stats[name]={correct:0,attempts:0};
+      if(isCorrect(p.result)){stats[name].correct++;stats[name].attempts++;}
+      else if(isIncorrect(p.result)){stats[name].attempts++;}
+      else{
+        const n=num(p.result);
+        if(n!==null){
+          stats[name].attempts++;
+          if(n>0)stats[name].correct++;
+        }
+      }
+    }
+  }
+  return Object.entries(stats).map(([name,s])=>({
+    name,
+    correct:s.correct,
+    attempts:s.attempts,
+    pct:s.attempts ? (s.correct/s.attempts)*100 : 0
+  })).sort((a,b)=>b.pct-a.pct || b.attempts-a.attempts || a.name.localeCompare(b.name));
+}
+function openWeek(i){
+  selectedIndex=i;
+  renderWeek();
+  document.getElementById("weekDetail").style.display="block";
+  document.getElementById("weekDetail").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function renderWeek(){
+  const w=weeks[selectedIndex],input=totalForSection(w,"input"),ret=totalForSection(w,"return"),diff=ret-input;
+  document.getElementById("weekButtons").innerHTML=weeks.map((x,i)=>`<button class="weekbtn ${i===selectedIndex?"active":""}" onclick="openWeek(${i})">${esc(x.label)}</button>`).join("");
+  document.getElementById("inputTotal").textContent=fmt(input);
+  document.getElementById("returnTotal").textContent=fmt(ret);
+  const d=document.getElementById("difference");d.textContent=fmt(diff);d.className="value "+(diff>=0?"green":"red");
+  document.getElementById("weekGuessPct").textContent=weeklyGuessPct(w).toFixed(0)+"%";
+  const inputs=valuesForSection(w,"input");
+  document.getElementById("inputs").innerHTML=inputs.map(x=>`<tr><td>${esc(x.label)}</td><td class="big">${fmt(x.value)}</td></tr>`).join("")+`<tr class="totalrow"><td>Total</td><td>${fmt(input)}</td></tr>`;
+  const returns=valuesForSection(w,"return");
+  document.getElementById("returns").innerHTML=returns.map(x=>`<tr><td>${esc(x.label)}</td><td class="big">${fmt(x.value)}</td></tr>`).join("")+`<tr class="totalrow"><td>Total</td><td>${fmt(ret)}</td></tr>`;
+  const people=individualRows(w);
+  document.getElementById("individuals").innerHTML=people.length?people.map(x=>`<tr><td class="big">${esc(x.name)}</td><td>${resultPill(x.result)}</td></tr>`).join(""):`<tr><td colspan="2" style="color:var(--muted)">No individual results detected for ${esc(w.label)}.</td></tr>`;
+}
+function render(){
+  if(!weeks.length){document.getElementById("message").innerHTML='<div class="error">The sheet loaded, but no Week 1 / Week 2 labels were found.</div>';return;}
+  const all=weeks.map(w=>({input:totalForSection(w,"input"),ret:totalForSection(w,"return")}));
+  const seasonInput=all.reduce((s,x)=>s+x.input,0),seasonReturn=all.reduce((s,x)=>s+x.ret,0),seasonDiff=seasonReturn-seasonInput;
+  document.getElementById("overallInput").textContent=fmt(seasonInput);
+  document.getElementById("overallReturn").textContent=fmt(seasonReturn);
+  const od=document.getElementById("overallDifference");od.textContent=fmt(seasonDiff);od.className="value "+(seasonDiff>=0?"green":"red");
+  document.getElementById("weeksCount").textContent=weeks.length;
+  const totals=overallInputTotals();
+  document.getElementById("overallInputBreakdown").innerHTML=INPUT_LABELS.map(label=>`<tr><td>${esc(label)}</td><td class="big">${fmt(totals[label])}</td></tr>`).join("");
+
+  const personStats=overallIndividualStats();
+  document.getElementById("overallIndividuals").innerHTML=personStats.length
+    ? personStats.map(p=>`<tr><td class="big">${esc(p.name)}</td><td>${p.correct}</td><td>${p.attempts}</td><td class="big">${p.pct.toFixed(0)}%</td></tr>`).join("")
+    : '<tr><td colspan="4" style="color:var(--muted)">No individual results detected yet.</td></tr>';
+
+  document.getElementById("weekButtons").innerHTML=weeks.map((x,i)=>`<button class="weekbtn" onclick="openWeek(${i})">${esc(x.label)}</button>`).join("");
+  document.getElementById("message").innerHTML="";
+}
+async function load(){
+  try{
+    const sep=CSV_URL.includes("?")?"&":"?";
+    const res=await fetch(CSV_URL+sep+"_="+Date.now(),{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    grid=parseCSV(await res.text());weeks=detectWeeks();
+    document.getElementById("status").textContent=weeks.length?`Live · ${weeks.length} week${weeks.length===1?"":"s"} detected`:"Sheet loaded";
+    render();
+  }catch(e){
+    document.getElementById("status").textContent="Live sheet unavailable";
+    document.getElementById("message").innerHTML='<div class="error">The published Google Sheet could not be loaded.</div>';
+  }
+}
+load();
+</script>
+</body>
+</html>
