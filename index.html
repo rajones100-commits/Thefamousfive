@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syndicate Tracker</title>
+<style>
+  :root{
+    --bg:#0b1020;
+    --panel:#141b2d;
+    --panel2:#1b2439;
+    --text:#f4f7fb;
+    --muted:#9eabc2;
+    --green:#37d67a;
+    --red:#ff5d6c;
+    --gold:#ffc857;
+    --blue:#62a8ff;
+    --border:rgba(255,255,255,.08);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(circle at top right, rgba(98,168,255,.12), transparent 30%),
+      linear-gradient(180deg,#080d19 0%,var(--bg) 100%);
+    color:var(--text);
+    min-height:100vh;
+  }
+  .wrap{max-width:1180px;margin:auto;padding:28px 18px 50px}
+  .hero{
+    display:flex;justify-content:space-between;gap:20px;align-items:flex-end;
+    margin-bottom:22px;
+  }
+  .eyebrow{color:var(--gold);font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+  h1{font-size:clamp(2rem,6vw,4.3rem);line-height:.95;margin:8px 0 10px;letter-spacing:-.05em}
+  .sub{color:var(--muted);max-width:650px}
+  .updated{font-size:.85rem;color:var(--muted);white-space:nowrap}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:24px 0}
+  .card,.panel{
+    background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
+    border:1px solid var(--border);border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,.18);
+  }
+  .card{padding:18px}
+  .label{color:var(--muted);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+  .value{font-size:clamp(1.7rem,4vw,2.8rem);font-weight:900;margin-top:7px}
+  .value.green{color:var(--green)} .value.red{color:var(--red)} .value.gold{color:var(--gold)}
+  .grid{display:grid;grid-template-columns:1.3fr .7fr;gap:16px}
+  .panel{padding:20px}
+  .panel h2{margin:0 0 16px;font-size:1.15rem}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:12px 8px;border-bottom:1px solid var(--border);text-align:left}
+  th{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  td:last-child,th:last-child{text-align:right}
+  tr:last-child td{border-bottom:0}
+  .pill{
+    display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:.78rem;font-weight:800
+  }
+  .win{background:rgba(55,214,122,.13);color:var(--green)}
+  .loss{background:rgba(255,93,108,.13);color:var(--red)}
+  .barrow{display:grid;grid-template-columns:115px 1fr 48px;gap:10px;align-items:center;margin:13px 0}
+  .barname{color:var(--muted);font-size:.86rem}
+  .track{height:10px;background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden}
+  .fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:999px}
+  .barval{text-align:right;font-weight:800}
+  .weekstrip{display:flex;gap:8px;overflow:auto;padding-bottom:4px;margin-bottom:16px}
+  .weekbtn{
+    border:1px solid var(--border);background:var(--panel2);color:var(--muted);
+    padding:8px 12px;border-radius:999px;cursor:pointer;font-weight:750;white-space:nowrap
+  }
+  .weekbtn.active{background:var(--text);color:#111827}
+  .foot{color:var(--muted);font-size:.8rem;text-align:center;margin-top:28px}
+  .status{
+    display:inline-flex;align-items:center;gap:7px;font-size:.8rem;color:var(--muted)
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+  @media(max-width:800px){
+    .cards{grid-template-columns:repeat(2,1fr)}
+    .grid{grid-template-columns:1fr}
+    .hero{display:block}.updated{margin-top:12px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">2026/27 Syndicate</div>
+      <h1>The Syndicate<br>Tracker</h1>
+      <div class="sub">A live view of what we've staked, what we've got back, and who is actually pulling their weight.</div>
+    </div>
+    <div class="updated">
+      <span class="status"><span class="dot"></span> Live sheet ready</span><br>
+      Updated: <span id="updatedText">15 Aug 2026</span>
+    </div>
+  </div>
+
+  <div class="weekstrip" id="weekStrip"></div>
+
+  <div class="cards">
+    <div class="card"><div class="label">Total Staked</div><div class="value" id="totalStaked">£25.00</div></div>
+    <div class="card"><div class="label">Total Returned</div><div class="value green" id="totalReturned">£10.00</div></div>
+    <div class="card"><div class="label">Performance</div><div class="value red" id="performance">-£15.00</div></div>
+    <div class="card"><div class="label">Return on Stake</div><div class="value gold" id="roi">40.0%</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Bet Breakdown</h2>
+      <table>
+        <thead><tr><th>Bet</th><th>Staked</th><th>Returned</th><th>P/L</th></tr></thead>
+        <tbody id="betTable"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Individual Performance</h2>
+      <div id="players"></div>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:16px">
+    <div class="panel">
+      <h2>Season Progress</h2>
+      <table>
+        <thead><tr><th>Week</th><th>Staked</th><th>Return</th><th>Performance</th></tr></thead>
+        <tbody id="seasonTable"></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h2>Season Totals</h2>
+      <div class="barrow"><div class="barname">Stake</div><div class="track"><div class="fill" id="stakeBar"></div></div><div class="barval" id="seasonStake">£25</div></div>
+      <div class="barrow"><div class="barname">Return</div><div class="track"><div class="fill" id="returnBar"></div></div><div class="barval" id="seasonReturn">£10</div></div>
+      <div class="barrow"><div class="barname">Winning picks</div><div class="track"><div class="fill" id="winBar"></div></div><div class="barval" id="winPct">80%</div></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    Built for GitHub Pages · Data can be pulled directly from a published Google Sheet.
+  </div>
+</div>
+
+<script>
+/*
+  LIVE GOOGLE SHEET
+  -----------------
+  1. In Google Sheets: File > Share > Publish to web.
+  2. Publish the relevant tab as CSV.
+  3. Paste that CSV URL below.
+  4. The page will attempt to load it automatically.
+
+  For the cleanest live setup, create a tab called "WebData" with columns:
+  Date,Week,Type,Name,Amount,Player,Result
+
+  Examples:
+  15/08/2026,Week 1,Bet,Boost,10,,
+  15/08/2026,Week 1,Return,Boost,10,,
+  15/08/2026,Week 1,Player,,,Jonners,Win
+*/
+const SHEET_CSV_URL = ""; // paste published Google Sheet CSV URL here
+
+const fallbackData = [
+  {
+    date:"15 Aug 2026",
+    week:"Week 1",
+    bets:[
+      {name:"Boost",stake:10,returned:10},
+      {name:"Sporting Life (Big)",stake:3,returned:0},
+      {name:"Sporting Life (Small)",stake:5,returned:0},
+      {name:"Lottery",stake:2,returned:0},
+      {name:"Group bet",stake:5,returned:0}
+    ],
+    players:[
+      {name:"Jonners",result:"Win"},
+      {name:"Dave",result:"Loss"},
+      {name:"Bungle",result:"Win"},
+      {name:"Handy",result:"Win"},
+      {name:"Jasper",result:"Win"}
+    ]
+  }
+];
+
+let weeks = fallbackData;
+let selected = 0;
+
+const money = n => (n < 0 ? "-£" + Math.abs(n).toFixed(2) : "£" + n.toFixed(2));
+
+function render(){
+  const w = weeks[selected];
+  const totalStake = w.bets.reduce((a,b)=>a+b.stake,0);
+  const totalReturn = w.bets.reduce((a,b)=>a+b.returned,0);
+  const perf = totalReturn-totalStake;
+  const roi = totalStake ? (totalReturn/totalStake)*100 : 0;
+
+  document.getElementById("updatedText").textContent = w.date;
+  document.getElementById("totalStaked").textContent = money(totalStake);
+  document.getElementById("totalReturned").textContent = money(totalReturn);
+  const p = document.getElementById("performance");
+  p.textContent = money(perf);
+  p.className = "value " + (perf >= 0 ? "green" : "red");
+  document.getElementById("roi").textContent = roi.toFixed(1) + "%";
+
+  document.getElementById("betTable").innerHTML = w.bets.map(b=>{
+    const pl=b.returned-b.stake;
+    return `<tr>
+      <td>${b.name}</td>
+      <td>${money(b.stake)}</td>
+      <td>${money(b.returned)}</td>
+      <td style="color:${pl>=0?'var(--green)':'var(--red)'};font-weight:800">${money(pl)}</td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("players").innerHTML = w.players.map(x=>{
+    const win=x.result.toLowerCase()==="win";
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <span style="font-weight:750">${x.name}</span>
+      <span class="pill ${win?'win':'loss'}">${win?'WIN':'LOSS'}</span>
+    </div>`;
+  }).join("");
+
+  document.getElementById("weekStrip").innerHTML = weeks.map((x,i)=>
+    `<button class="weekbtn ${i===selected?'active':''}" onclick="selected=${i};render()">${x.week}</button>`
+  ).join("");
+
+  document.getElementById("seasonTable").innerHTML = weeks.map(x=>{
+    const s=x.bets.reduce((a,b)=>a+b.stake,0);
+    const r=x.bets.reduce((a,b)=>a+b.returned,0);
+    const pl=r-s;
+    return `<tr><td>${x.week}</td><td>${money(s)}</td><td>${money(r)}</td>
+      <td style="color:${pl>=0?'var(--green)':'var(--red)'};font-weight:800">${money(pl)}</td></tr>`;
+  }).join("");
+
+  const seasonStake=weeks.reduce((a,x)=>a+x.bets.reduce((s,b)=>s+b.stake,0),0);
+  const seasonReturn=weeks.reduce((a,x)=>a+x.bets.reduce((s,b)=>s+b.returned,0),0);
+  const allPlayers=weeks.flatMap(x=>x.players);
+  const wins=allPlayers.filter(x=>x.result.toLowerCase()==="win").length;
+  const winPct=allPlayers.length ? (wins/allPlayers.length*100) : 0;
+  const scale=Math.max(seasonStake,seasonReturn,1);
+
+  document.getElementById("seasonStake").textContent=money(seasonStake).replace(".00","");
+  document.getElementById("seasonReturn").textContent=money(seasonReturn).replace(".00","");
+  document.getElementById("winPct").textContent=winPct.toFixed(0)+"%";
+  document.getElementById("stakeBar").style.width=(seasonStake/scale*100)+"%";
+  document.getElementById("returnBar").style.width=(seasonReturn/scale*100)+"%";
+  document.getElementById("winBar").style.width=winPct+"%";
+}
+
+function parseCSV(text){
+  // Simple CSV parser suitable for a clean "WebData" tab.
+  const lines=text.trim().split(/\r?\n/);
+  const rows=lines.map(line=>{
+    const out=[]; let cur=""; let q=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c === '"'){
+        if(q && line[i+1] === '"'){cur+='"'; i++;}
+        else q=!q;
+      } else if(c === ',' && !q){out.push(cur);cur="";}
+      else cur+=c;
+    }
+    out.push(cur);
+    return out;
+  });
+  const headers=rows.shift().map(x=>x.trim().toLowerCase());
+  return rows.filter(r=>r.some(x=>x.trim())).map(r=>{
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=(r[i]||"").trim());
+    return obj;
+  });
+}
+
+async function loadLive(){
+  if(!SHEET_CSV_URL){render();return;}
+  try{
+    const res=await fetch(SHEET_CSV_URL,{cache:"no-store"});
+    if(!res.ok) throw new Error("Sheet request failed");
+    const data=parseCSV(await res.text());
+    const map=new Map();
+
+    for(const row of data){
+      const wk=row.week || "Week 1";
+      if(!map.has(wk)) map.set(wk,{date:row.date||"",week:wk,bets:[],players:[]});
+      const obj=map.get(wk);
+
+      if((row.type||"").toLowerCase()==="player"){
+        obj.players.push({name:row.player||row.name,result:row.result||"Loss"});
+      }else if((row.type||"").toLowerCase()==="bet"){
+        obj.bets.push({name:row.name,stake:Number(row.amount||0),returned:0});
+      }else if((row.type||"").toLowerCase()==="return"){
+        let bet=obj.bets.find(b=>b.name.toLowerCase()===(row.name||"").toLowerCase());
+        if(!bet){bet={name:row.name,stake:0,returned:0};obj.bets.push(bet);}
+        bet.returned=Number(row.amount||0);
+      }
+    }
+    const loaded=[...map.values()];
+    if(loaded.length){weeks=loaded;selected=loaded.length-1;}
+  }catch(err){
+    console.warn("Could not load live sheet. Showing fallback data.",err);
+  }
+  render();
+}
+
+loadLive();
+</script>
+</body>
+</html>
